@@ -11,13 +11,14 @@ function createApp() {
   const app = express();
 
   app.use(helmet());
-  // FRONTEND_URL + CORS_ORIGINS (comma-separated) + common local Next ports
+  // FRONTEND_URL + CORS_ORIGINS (comma-separated) + known deploy / local origins
   const corsOrigins = [
     ...String(config.frontendUrl || '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
     ...(config.corsOrigins || []),
+    'https://news-phi-nine.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
