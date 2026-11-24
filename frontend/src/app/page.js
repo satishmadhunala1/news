@@ -12,6 +12,8 @@ import { useLanguage } from '@/context/LanguageContext';
 
 const REGION_LINKS = [
   ['Hyderabad', '/hyderabad'],
+  ['Delhi', '/delhi'],
+  ['Greater Noida', '/greater-noida'],
   ['Telangana', '/telangana'],
   ['Andhra Pradesh', '/andhra-pradesh'],
   ['India', '/india'],

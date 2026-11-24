@@ -20,6 +20,8 @@ import { LanguageSwitch } from './LanguageSwitch';
 const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/hyderabad', label: 'Hyderabad', icon: MapPin },
+  { href: '/delhi', label: 'Delhi', icon: MapPin },
+  { href: '/greater-noida', label: 'Greater Noida, Uttar Pradesh', icon: MapPin },
   { href: '/telangana', label: 'Telangana', icon: MapPin },
   { href: '/andhra-pradesh', label: 'Andhra Pradesh', icon: MapPin },
   { href: '/india', label: 'India', icon: MapPin },

@@ -138,6 +138,8 @@ Commands:
 /help – This help
 /india – India news
 /hyderabad – Hyderabad news
+/delhi – Delhi news
+/noida – Greater Noida news
 /telangana – Telangana news
 /world – World news
 /technology – Tech & AI
@@ -181,6 +183,10 @@ async function handleCommand(message) {
       return sendList({ location: 'india' }, 'India');
     case '/hyderabad':
       return sendList({ location: 'hyderabad' }, 'Hyderabad');
+    case '/delhi':
+      return sendList({ location: 'delhi' }, 'Delhi');
+    case '/noida':
+      return sendList({ location: 'greater-noida' }, 'Greater Noida');
     case '/telangana':
       return sendList({ location: 'telangana' }, 'Telangana');
     case '/world':

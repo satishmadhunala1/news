@@ -92,6 +92,18 @@ async function fetchRegionalBundles() {
       language: 'en',
     },
     {
+      key: 'delhi-en',
+      query: '(Delhi OR "New Delhi") sourcecountry:IN sourcelang:eng',
+      location: 'delhi',
+      language: 'en',
+    },
+    {
+      key: 'greater-noida-en',
+      query: '("Greater Noida" OR Noida OR "Gautam Buddh Nagar") sourcecountry:IN sourcelang:eng',
+      location: 'greater-noida',
+      language: 'en',
+    },
+    {
       key: 'world-en',
       query: '(world OR international OR geopolitics) sourcelang:eng',
       location: 'international',

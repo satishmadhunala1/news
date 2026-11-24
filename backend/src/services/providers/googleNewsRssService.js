@@ -58,6 +58,15 @@ const TE = { hl: 'te', gl: 'IN', ceid: 'IN:te' };
 const DEFAULT_FEEDS = [
   // English regional / national / world
   { id: 'hyderabad', label: 'Hyderabad', language: 'en', location: 'hyderabad', url: buildSearchFeedUrl({ query: 'Hyderabad' }), maxItems: 10 },
+  { id: 'delhi', label: 'Delhi', language: 'en', location: 'delhi', url: buildSearchFeedUrl({ query: 'Delhi OR "New Delhi"' }), maxItems: 10 },
+  {
+    id: 'greater-noida',
+    label: 'Greater Noida',
+    language: 'en',
+    location: 'greater-noida',
+    url: buildSearchFeedUrl({ query: '"Greater Noida" OR Noida OR "Gautam Buddh Nagar"' }),
+    maxItems: 10,
+  },
   { id: 'telangana', label: 'Telangana', language: 'en', location: 'telangana', url: buildSearchFeedUrl({ query: 'Telangana' }), maxItems: 10 },
   { id: 'andhra-pradesh', label: 'Andhra Pradesh', language: 'en', location: 'andhra-pradesh', url: buildSearchFeedUrl({ query: 'Andhra Pradesh' }), maxItems: 10 },
   { id: 'india', label: 'India', language: 'en', location: 'india', url: buildSearchFeedUrl({ query: 'India news' }), maxItems: 10 },

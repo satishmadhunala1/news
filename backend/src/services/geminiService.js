@@ -98,7 +98,7 @@ Return ONLY valid JSON in this shape:
       "teluguOneLiner": ${includeTelugu ? '"short Telugu sentence"' : 'null'},
       "teluguSummary": ${includeTelugu ? '"one Telugu paragraph"' : 'null'},
       "category": "one of: national-politics, state-politics, government-announcements, hyderabad-local, business-economy, technology-ai, sports, cricket, entertainment, crime-safety, science-space, international-affairs, breaking-news",
-      "location": "one of: hyderabad, telangana, andhra-pradesh, india, united-states, united-kingdom, china, russia, europe, international",
+      "location": "one of: hyderabad, delhi, greater-noida, telangana, andhra-pradesh, india, united-states, united-kingdom, china, russia, europe, international",
       "importanceScore": 0-100
     }
   ]
@@ -138,7 +138,9 @@ ${JSON.stringify(payload)}`;
           article.category === 'entertainment'
             ? 'entertainment'
             : ai.category || article.category,
-        location: ['andhra-pradesh', 'hyderabad', 'telangana'].includes(article.location)
+        location: ['andhra-pradesh', 'hyderabad', 'telangana', 'delhi', 'greater-noida'].includes(
+          article.location
+        )
           ? article.location
           : ai.location || article.location,
         importanceScore:

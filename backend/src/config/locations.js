@@ -4,6 +4,14 @@
 
 const DEFAULT_LOCATIONS = [
   { id: 'hyderabad', label: 'Hyderabad', query: 'Hyderabad', country: 'in', region: 'Telangana' },
+  { id: 'delhi', label: 'Delhi', query: 'Delhi', country: 'in', region: 'Delhi' },
+  {
+    id: 'greater-noida',
+    label: 'Greater Noida, Uttar Pradesh',
+    query: 'Greater Noida',
+    country: 'in',
+    region: 'Uttar Pradesh',
+  },
   { id: 'telangana', label: 'Telangana', query: 'Telangana', country: 'in', region: 'Telangana' },
   { id: 'andhra-pradesh', label: 'Andhra Pradesh', query: 'Andhra Pradesh', country: 'in', region: 'Andhra Pradesh' },
   { id: 'india', label: 'India', query: 'India', country: 'in', region: null },

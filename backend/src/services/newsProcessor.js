@@ -36,6 +36,18 @@ async function fetchFromAllProviders() {
     country: 'in',
   });
   await sleep(1100);
+  const gDelhi = await gnews.searchArticles({
+    q: 'Delhi OR "New Delhi"',
+    max: 6,
+    country: 'in',
+  });
+  await sleep(1100);
+  const gNoida = await gnews.searchArticles({
+    q: '"Greater Noida" OR Noida OR "Gautam Buddh Nagar"',
+    max: 6,
+    country: 'in',
+  });
+  await sleep(1100);
   const gAp = await gnews.searchArticles({
     q: '"Andhra Pradesh" OR Amaravati OR Vijayawada OR Visakhapatnam',
     max: 8,
@@ -61,10 +73,10 @@ async function fetchFromAllProviders() {
   });
 
   // Existing providers stay independent; new providers fail without stopping others
-  const [nTop, nIndia, nTech, nEnt, nAp, rss, oneindia, teRss] = await Promise.all([
+  const [nTop, nIndia, nTech, nEnt, nAp, nDelhi, nNoida, rss, oneindia, teRss] = await Promise.all([
     newsapi.fetchTopHeadlines({ country: 'in', pageSize: 8 }),
     newsapi.searchEverything({
-      q: 'India OR Hyderabad OR Telangana OR "Andhra Pradesh"',
+      q: 'India OR Hyderabad OR Telangana OR "Andhra Pradesh" OR Delhi OR Noida',
       pageSize: 8,
     }),
     newsapi.searchEverything({ q: 'technology OR AI OR cricket', pageSize: 5 }),
@@ -74,6 +86,14 @@ async function fetchFromAllProviders() {
     }),
     newsapi.searchEverything({
       q: '"Andhra Pradesh" OR Amaravati OR Vijayawada OR Visakhapatnam',
+      pageSize: 8,
+    }),
+    newsapi.searchEverything({
+      q: 'Delhi OR "New Delhi"',
+      pageSize: 8,
+    }),
+    newsapi.searchEverything({
+      q: '"Greater Noida" OR Noida OR "Gautam Buddh Nagar"',
       pageSize: 8,
     }),
     googleRss.fetchConfiguredFeeds(),
@@ -98,6 +118,8 @@ async function fetchFromAllProviders() {
   for (const result of [
     gTop,
     gHyd,
+    gDelhi,
+    gNoida,
     gAp,
     gTg,
     gEnt,
@@ -107,6 +129,8 @@ async function fetchFromAllProviders() {
     nTech,
     nEnt,
     nAp,
+    nDelhi,
+    nNoida,
     rss,
     oneindia,
     teRss,
@@ -151,6 +175,8 @@ async function fetchFromAllProviders() {
   const normalized = [
     ...normalizeMany(gTop.articles, 'gnews', { location: 'india', language: 'en' }),
     ...normalizeMany(gHyd.articles, 'gnews', { location: 'hyderabad', language: 'en' }),
+    ...normalizeMany(gDelhi.articles, 'gnews', { location: 'delhi', language: 'en' }),
+    ...normalizeMany(gNoida.articles, 'gnews', { location: 'greater-noida', language: 'en' }),
     ...normalizeMany(gAp.articles, 'gnews', { location: 'andhra-pradesh', language: 'en' }),
     ...normalizeMany(gTg.articles, 'gnews', { location: 'telangana', language: 'en' }),
     ...normalizeMany(gEnt.articles, 'gnews', { category: 'entertainment', location: 'india', language: 'en' }),
@@ -160,6 +186,8 @@ async function fetchFromAllProviders() {
     ...normalizeMany(nTech.articles, 'newsapi', { category: 'technology-ai', language: 'en' }),
     ...normalizeMany(nEnt.articles, 'newsapi', { category: 'entertainment', location: 'india', language: 'en' }),
     ...normalizeMany(nAp.articles, 'newsapi', { location: 'andhra-pradesh', language: 'en' }),
+    ...normalizeMany(nDelhi.articles, 'newsapi', { location: 'delhi', language: 'en' }),
+    ...normalizeMany(nNoida.articles, 'newsapi', { location: 'greater-noida', language: 'en' }),
     ...normalizeMany(rss.articles || [], 'google-news-rss'),
     ...normalizeMany(oneindia.articles || [], 'oneindia-telugu-rss', { language: 'te' }),
     ...normalizeMany(teRss.articles || [], 'telugu-rss', { language: 'te' }),

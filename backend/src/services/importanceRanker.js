@@ -69,6 +69,23 @@ function detectLocation(article) {
   // Keyword detection first so Andhra stories are not stuck as Hyderabad/India
   const extra = [
     {
+      id: 'greater-noida',
+      needles: [
+        'greater noida',
+        'noida',
+        'gautam buddh nagar',
+        'gautam buddha nagar',
+        'yeida',
+        'knowledge park',
+        'gamma 1',
+        'gamma 2',
+      ],
+    },
+    {
+      id: 'delhi',
+      needles: ['new delhi', 'delhi', 'ndmc', 'lg delhi', 'dwarka', 'rohini', 'connaught place'],
+    },
+    {
       id: 'andhra-pradesh',
       needles: [
         'andhra pradesh',

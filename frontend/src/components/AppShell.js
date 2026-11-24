@@ -30,7 +30,7 @@ export function AppShell({ children }) {
                     News Assistant
                   </p>
                   <p className="mt-1 hidden text-xs text-[var(--muted)] sm:block">
-                    Hyderabad · Telangana · Andhra · India · World
+                    Hyderabad · Delhi · Greater Noida · Telangana · Andhra · India · World
                   </p>
                 </div>
               </div>
