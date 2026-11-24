@@ -5,12 +5,14 @@
  * Jobs:
  * - Every 30 minutes: fetch + store new articles; Telegram only for breaking news
  * - 09:00 / 13:00 / 19:00 Asia/Kolkata: full briefings
+ * - Daily: delete news older than NEWS_RETENTION_DAYS (default 7)
  */
 
 const cron = require('node-cron');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { processAndStore } = require('./newsProcessor');
+const { cleanupOldNews } = require('./newsCleanupService');
 const telegramService = require('./telegramService');
 const News = require('../models/News');
 const UserPreferences = require('../models/UserPreferences');
@@ -162,6 +164,18 @@ async function runBriefing(label) {
   }
 }
 
+async function runRetentionCleanup() {
+  try {
+    logger.info('Scheduler: starting news retention cleanup');
+    const result = await cleanupOldNews();
+    logger.info('Scheduler: news retention cleanup complete', result);
+    return result;
+  } catch (err) {
+    logger.error('Scheduler news retention cleanup failed', { message: err.message });
+    return { error: err.message };
+  }
+}
+
 async function startScheduler() {
   if (!config.scheduler.enabled) {
     logger.info('Scheduler disabled by config');
@@ -175,6 +189,7 @@ async function startScheduler() {
   const afternoon = timeToCron(prefs?.afternoonBriefingTime, config.scheduler.afternoonCron);
   const evening = timeToCron(prefs?.eveningBriefingTime, config.scheduler.eveningCron);
   const intervalCron = config.scheduler.intervalCron || '*/30 * * * *';
+  const cleanupCron = config.scheduler.cleanupCron || '15 3 * * *';
   const timezone = config.timezone;
 
   const definitions = [
@@ -186,6 +201,11 @@ async function startScheduler() {
     { name: 'Morning Briefing', expr: morning, handler: () => runBriefing('Morning Briefing') },
     { name: 'Afternoon Updates', expr: afternoon, handler: () => runBriefing('Afternoon Updates') },
     { name: 'Evening Briefing', expr: evening, handler: () => runBriefing('Evening Briefing') },
+    {
+      name: `News retention (${config.scheduler.newsRetentionDays}d)`,
+      expr: cleanupCron,
+      handler: runRetentionCleanup,
+    },
   ];
 
   for (const def of definitions) {
@@ -197,6 +217,11 @@ async function startScheduler() {
     jobs.push(job);
     logger.info('Scheduled job', { name: def.name, expr: def.expr, timezone });
   }
+
+  // Run once on boot so old stories are trimmed without waiting for 3:15 AM
+  runRetentionCleanup().catch((err) => {
+    logger.error('Startup news retention cleanup failed', { message: err.message });
+  });
 }
 
 function stopScheduler() {
@@ -209,4 +234,5 @@ module.exports = {
   stopScheduler,
   runBriefing,
   runIntervalFetch,
+  runRetentionCleanup,
 };

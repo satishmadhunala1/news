@@ -88,6 +88,9 @@ const config = {
     morningCron: process.env.MORNING_BRIEFING_CRON || '0 9 * * *',
     afternoonCron: process.env.AFTERNOON_UPDATE_CRON || '0 13 * * *',
     eveningCron: process.env.EVENING_BRIEFING_CRON || '0 19 * * *',
+    // Daily cleanup — keep only last N days of news
+    cleanupCron: process.env.NEWS_CLEANUP_CRON || '15 3 * * *',
+    newsRetentionDays: asInt(process.env.NEWS_RETENTION_DAYS, 7),
     maxArticlesPerBriefing: asInt(process.env.MAX_ARTICLES_PER_BRIEFING, 10),
   },
 
