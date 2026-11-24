@@ -1,0 +1,42 @@
+{
+  "name": "personal-news-assistant-backend",
+  "version": "1.0.0",
+  "description": "Express backend for Personal AI News Assistant",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "scheduler": "node src/scheduler.js",
+    "test:providers": "node scripts/test-providers.js",
+    "test:new-providers": "node scripts/test-new-providers.js",
+    "test": "node scripts/test-providers.js"
+  },
+  "keywords": [
+    "news",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@google/genai": "^3.6.1",
+    "axios": "^1.21.1",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
+    "mongoose": "^9.12.2",
+    "morgan": "^1.12.1",
+    "node-cron": "^4.6.0",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
