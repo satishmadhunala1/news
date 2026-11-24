@@ -82,6 +82,22 @@ function detectLocation(article) {
       ],
     },
     {
+      id: 'uttar-pradesh',
+      needles: [
+        'uttar pradesh',
+        'yogi adityanath',
+        'cm yogi',
+        'lucknow',
+        'varanasi',
+        'prayagraj',
+        'kanpur',
+        'ayodhya',
+        'gorakhpur',
+        'sharda university',
+        'sharada university',
+      ],
+    },
+    {
       id: 'delhi',
       needles: ['new delhi', 'delhi', 'ndmc', 'lg delhi', 'dwarka', 'rohini', 'connaught place'],
     },

@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const News = require('../models/News');
 const { processAndStore, backfillMissingImages } = require('../services/newsProcessor');
+const { searchTopic } = require('../services/topicSearchService');
 
 function parsePagination(query) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
@@ -30,17 +31,23 @@ function languageFilter(language) {
   return {};
 }
 
-async function findWithLanguageFallback(baseFilter, language, { sort, skip = 0, limit = 20 } = {}) {
+async function findWithLanguageFallback(
+  baseFilter,
+  language,
+  { sort, skip = 0, limit = 20, preferImages = true } = {}
+) {
   const preferred = mergeFilters(baseFilter, languageFilter(language));
-  // Prefer stories that already have real images (Edge-style cards)
+  // Newest first; images are a tie-breaker only (never bury today's news under old cards)
   const withImagesFirst = {
     hasImage: { $cond: [{ $and: [{ $ne: ['$imageUrl', null] }, { $ne: ['$imageUrl', ''] }] }, 1, 0] },
   };
+  const primarySort = sort || { publishedAt: -1 };
+  const sortStage = preferImages ? { ...primarySort, hasImage: -1 } : primarySort;
 
   let items = await News.aggregate([
     { $match: preferred },
     { $addFields: withImagesFirst },
-    { $sort: { hasImage: -1, ...(sort || { publishedAt: -1 }) } },
+    { $sort: sortStage },
     { $skip: skip },
     { $limit: limit },
     { $project: { hasImage: 0 } },
@@ -52,7 +59,7 @@ async function findWithLanguageFallback(baseFilter, language, { sort, skip = 0, 
     items = await News.aggregate([
       { $match: baseFilter || {} },
       { $addFields: withImagesFirst },
-      { $sort: { hasImage: -1, ...(sort || { publishedAt: -1 }) } },
+      { $sort: sortStage },
       { $skip: skip },
       { $limit: limit },
       { $project: { hasImage: 0 } },
@@ -61,6 +68,11 @@ async function findWithLanguageFallback(baseFilter, language, { sort, skip = 0, 
   }
 
   return { items, total };
+}
+
+/** Rolling window for "top / important" so Nov 19 stories don't sit above today's. */
+function recentPublishedFilter(hours = 48) {
+  return { publishedAt: { $gte: new Date(Date.now() - hours * 60 * 60 * 1000) } };
 }
 
 function mergeFilters(...parts) {
@@ -119,12 +131,21 @@ async function latestNews(req, res, next) {
 async function importantNews(req, res, next) {
   try {
     const limit = Math.min(50, Number.parseInt(req.query.limit, 10) || 20);
-    const min = Number.parseInt(req.query.minImportance, 10) || 60;
-    const { items } = await findWithLanguageFallback(
-      { importanceScore: { $gte: min } },
+    const min = Number.parseInt(req.query.minImportance, 10) || 50;
+    let { items } = await findWithLanguageFallback(
+      mergeFilters({ importanceScore: { $gte: min } }, recentPublishedFilter(48)),
       req.query.language,
-      { sort: { importanceScore: -1, publishedAt: -1 }, limit }
+      { sort: { publishedAt: -1, importanceScore: -1 }, limit, preferImages: false }
     );
+    // If the last 48h is thin, widen to 7 days but still newest-first
+    if (items.length < Math.min(4, limit)) {
+      const widened = await findWithLanguageFallback(
+        mergeFilters({ importanceScore: { $gte: min } }, recentPublishedFilter(7 * 24)),
+        req.query.language,
+        { sort: { publishedAt: -1, importanceScore: -1 }, limit, preferImages: false }
+      );
+      items = widened.items;
+    }
     res.json({ success: true, data: items });
   } catch (err) {
     next(err);
@@ -165,22 +186,29 @@ async function searchNews(req, res, next) {
     if (!q) {
       return res.status(400).json({ success: false, error: 'Query parameter q is required' });
     }
-    const { page, limit, skip } = parsePagination(req.query);
-    const textFilter = {
-      $or: [
-        { title: new RegExp(q, 'i') },
-        { description: new RegExp(q, 'i') },
-        { summary: new RegExp(q, 'i') },
-        { teluguSummary: new RegExp(q, 'i') },
-        { sourceName: new RegExp(q, 'i') },
-      ],
-    };
-    const filter = mergeFilters(textFilter, languageFilter(req.query.language));
-    const [items, total] = await Promise.all([
-      News.find(filter).sort({ publishedAt: -1 }).skip(skip).limit(limit).lean(),
-      News.countDocuments(filter),
-    ]);
-    res.json({ success: true, page, limit, total, totalPages: Math.ceil(total / limit) || 1, data: items });
+    const { page, limit } = parsePagination(req.query);
+    const live = req.query.live !== 'false' && req.query.live !== '0';
+    const location = (req.query.location || '').trim() || undefined;
+
+    const result = await searchTopic({
+      q,
+      location,
+      language: req.query.language,
+      page,
+      limit,
+      live,
+    });
+
+    res.json({
+      success: true,
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+      liveFetched: result.liveFetched,
+      inferredLocation: result.inferredLocation,
+      data: result.items,
+    });
   } catch (err) {
     next(err);
   }
@@ -237,12 +265,21 @@ async function dashboardStats(req, res, next) {
     startOfDay.setHours(0, 0, 0, 0);
     const language = req.query.language;
 
-    const [{ items: important }, { items: latest, total }, todayPack, lastArticle] = await Promise.all([
-      findWithLanguageFallback(
-        { importanceScore: { $gte: 60 } },
-        language,
-        { sort: { importanceScore: -1 }, limit: 8 }
-      ),
+    const importantRecent = await findWithLanguageFallback(
+      mergeFilters({ importanceScore: { $gte: 50 } }, recentPublishedFilter(48)),
+      language,
+      { sort: { publishedAt: -1, importanceScore: -1 }, limit: 8, preferImages: false }
+    );
+    const important =
+      importantRecent.items.length >= 4
+        ? importantRecent
+        : await findWithLanguageFallback(
+            mergeFilters({ importanceScore: { $gte: 45 } }, recentPublishedFilter(7 * 24)),
+            language,
+            { sort: { publishedAt: -1, importanceScore: -1 }, limit: 8, preferImages: false }
+          );
+
+    const [{ items: latest, total }, todayPack, lastArticle] = await Promise.all([
       findWithLanguageFallback({}, language, { sort: { publishedAt: -1 }, limit: 12 }),
       findWithLanguageFallback({ fetchedAt: { $gte: startOfDay } }, language, {
         sort: { fetchedAt: -1 },
@@ -256,7 +293,7 @@ async function dashboardStats(req, res, next) {
       data: {
         todayCount: todayPack.total,
         total,
-        important,
+        important: important.items,
         latest,
         lastUpdated: lastArticle?.fetchedAt || null,
       },

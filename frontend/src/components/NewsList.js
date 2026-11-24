@@ -51,25 +51,18 @@ export function NewsList({ fetcher, title, subtitle }) {
   }
 
   return (
-    <section>
-      <header className="mb-6">
-        <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight sm:text-4xl">
+    <section className="animate-fade">
+      <header className="mb-7 max-w-2xl animate-rise">
+        <h1 className="font-[family-name:var(--font-display)] text-4xl tracking-tight text-[var(--brand-ink)] sm:text-5xl">
           {title}
         </h1>
-        {subtitle ? <p className="mt-2 max-w-2xl text-[var(--muted)]">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-3 text-[var(--muted)]">{subtitle}</p> : null}
       </header>
 
       {error ? <ErrorState message={error} onRetry={() => load(page)} /> : null}
       {loading && items.length === 0 ? <NewsSkeleton count={6} /> : null}
       {!loading && !error && items.length === 0 ? (
-        <EmptyState
-          title={language === 'te' ? 'ఇంకా వార్తలు లేవు' : 'No articles yet'}
-          description={
-            language === 'te'
-              ? 'Settingsలో Fetch news now నొక్కి తెలుగు/ఆంగ్ల వార్తలు సేకరించండి.'
-              : 'Fetch news from Settings to collect English and Telugu stories.'
-          }
-        />
+        <EmptyState title="No articles yet" description="Fetch news from Settings to fill this section." />
       ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -89,9 +82,9 @@ export function NewsList({ fetcher, title, subtitle }) {
             type="button"
             disabled={loading}
             onClick={() => load(page + 1)}
-            className="rounded-full bg-[#1a1a1a] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-xl bg-[var(--brand-ink)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--accent)] disabled:opacity-60"
           >
-            {loading ? 'Loading…' : language === 'te' ? 'మరిన్ని చూడండి' : 'Load more'}
+            {loading ? 'Loading…' : 'Load more'}
           </button>
         </div>
       ) : null}

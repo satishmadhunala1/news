@@ -45,7 +45,7 @@ export default function SettingsPage() {
         selectedLocations: prefs.selectedLocations,
         selectedCategories: prefs.selectedCategories,
         customLocations: prefs.customLocations,
-        preferredLanguage: prefs.preferredLanguage,
+        preferredLanguage: 'en',
         notificationFrequency: prefs.notificationFrequency,
         notificationEnabled: prefs.notificationEnabled,
         breakingNewsAlerts: prefs.breakingNewsAlerts,
@@ -134,7 +134,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="mt-2 text-[var(--muted)]">
-          Configure locations, categories, language, and Telegram briefings.
+          Configure locations, categories, and Telegram briefings.
         </p>
       </header>
 
@@ -191,17 +191,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Preferred language">
-          <select
-            value={prefs.preferredLanguage}
-            onChange={(e) => setPrefs({ ...prefs, preferredLanguage: e.target.value })}
-            className="w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm"
-          >
-            <option value="en">English</option>
-            <option value="te">Telugu</option>
-            <option value="both">English + Telugu</option>
-          </select>
-        </Field>
         <Field label="Notification frequency">
           <select
             value={prefs.notificationFrequency}

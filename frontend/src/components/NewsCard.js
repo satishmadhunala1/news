@@ -1,47 +1,26 @@
 'use client';
 
-import { Bookmark, ExternalLink } from 'lucide-react';
+import { Bookmark, ArrowUpRight } from 'lucide-react';
 import { formatDate, labelize } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { getDisplayContent } from '@/lib/articleDisplay';
 
-const PLACEHOLDER_COLORS = [
-  '#dbeafe', // light blue
-  '#dcfce7', // light green
-  '#fef3c7', // light amber
-  '#fce7f3', // light pink
-  '#e0e7ff', // soft indigo
-  '#ffedd5', // soft orange
-  '#e0f2fe', // sky
-  '#f3e8ff', // soft violet
-];
+const PLACEHOLDER_TONES = ['#d7ebe9', '#dde7f0', '#e8e6df', '#e4efe6', '#ebe4e8'];
 
-const API_LABELS = {
-  gnews: 'GNews API',
-  newsapi: 'NewsAPI',
-  'google-news-rss': 'Google News RSS',
-  newsdata: 'NewsData.io',
-  gdelt: 'GDELT DOC 2.0',
-  'oneindia-telugu-rss': 'Oneindia Telugu RSS',
-  'telugu-rss': 'Telugu RSS',
-};
-
-function placeholderColor(article) {
+function placeholderTone(article) {
   const key = `${article._id || ''}${article.url || ''}${article.title || ''}`;
   let hash = 0;
-  for (let i = 0; i < key.length; i += 1) hash = (hash + key.charCodeAt(i) * (i + 3)) % PLACEHOLDER_COLORS.length;
-  return PLACEHOLDER_COLORS[hash];
+  for (let i = 0; i < key.length; i += 1) hash = (hash + key.charCodeAt(i) * (i + 3)) % PLACEHOLDER_TONES.length;
+  return PLACEHOLDER_TONES[hash];
 }
 
 function getChannelName(article) {
   const name = (article.sourceName || '').trim();
-  if (!name || /^google-news-rss$/i.test(name) || /^gnews$/i.test(name) || /^newsapi$/i.test(name)) {
-    // Fallback: parse "Headline - Publisher" from Google News titles
+  if (!name || /^(google-news-rss|gnews|newsapi)$/i.test(name)) {
     const parts = (article.title || '').split(/\s+-\s+/);
     if (parts.length > 1) return parts[parts.length - 1].trim();
-    return 'Unknown channel';
+    return 'Unknown source';
   }
-  // Clean "Google News (Hyderabad)" style labels when a better publisher exists in title
   if (/^Google News/i.test(name)) {
     const parts = (article.title || '').split(/\s+-\s+/);
     if (parts.length > 1) return parts[parts.length - 1].trim();
@@ -49,20 +28,14 @@ function getChannelName(article) {
   return name;
 }
 
-function getApiLabel(article) {
-  return API_LABELS[article.source] || article.source || 'Unknown API';
-}
-
 export function NewsCard({ article, onBookmark, featured = false }) {
   const { language } = useLanguage();
-  const { title, oneLiner, story } = getDisplayContent(article, language);
+  const { title, oneLiner } = getDisplayContent(article, language);
   const hasImage = Boolean(article.imageUrl);
   const channel = getChannelName(article);
-  const apiLabel = getApiLabel(article);
-  const softBg = placeholderColor(article);
+  const softBg = placeholderTone(article);
 
   function openArticle(e) {
-    // Don't navigate when clicking Save
     if (e.target.closest('[data-stop-card-nav]')) return;
     window.open(article.url, '_blank', 'noopener,noreferrer');
   }
@@ -80,12 +53,13 @@ export function NewsCard({ article, onBookmark, featured = false }) {
       tabIndex={0}
       onClick={openArticle}
       onKeyDown={onKeyOpen}
-      className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#e6e6e6] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] ${
-        featured ? 'sm:col-span-2 lg:col-span-2' : ''
+      className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-white/90 transition duration-300 hover:-translate-y-1 hover:border-[rgba(13,115,119,0.28)] ${
+        featured ? 'sm:col-span-2' : ''
       }`}
+      style={{ boxShadow: 'var(--shadow)' }}
     >
       <div
-        className={`relative ${featured ? 'h-64 sm:h-72' : 'h-48 sm:h-52'}`}
+        className={`relative overflow-hidden ${featured ? 'h-60 sm:h-72' : 'h-44 sm:h-48'}`}
         style={{ backgroundColor: softBg }}
       >
         {hasImage ? (
@@ -93,7 +67,7 @@ export function NewsCard({ article, onBookmark, featured = false }) {
           <img
             src={article.imageUrl}
             alt=""
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={(e) => {
@@ -101,45 +75,33 @@ export function NewsCard({ article, onBookmark, featured = false }) {
             }}
           />
         ) : null}
-
-        <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2">
-          <span className="rounded-md bg-white/95 px-2 py-1 text-[11px] font-semibold text-[#222] shadow-sm">
-            {labelize(article.category)}
-          </span>
-          <span className="rounded-md bg-white/90 px-2 py-1 text-[11px] font-medium text-[#333] shadow-sm">
-            {labelize(article.location)}
-          </span>
-        </div>
-
-        <div className="absolute top-3 right-3">
-          <span className="rounded-md bg-[#111]/80 px-2 py-1 text-[10px] font-semibold tracking-wide text-white uppercase">
-            {apiLabel}
-          </span>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(16,42,46,0.55)] to-transparent p-3 pt-10">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium tracking-wide text-white/95">
+            <span>{labelize(article.category)}</span>
+            <span className="opacity-60">·</span>
+            <span>{labelize(article.location)}</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2.5 p-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-[#f3f3f3] px-2.5 py-1 font-semibold text-[#111]">
-            {channel}
-          </span>
-          <span className="text-[#888]">via {apiLabel}</span>
-          <span className="text-[#bbb]">·</span>
-          <time className="text-[#6b6b6b]">{formatDate(article.publishedAt)}</time>
+      <div className="flex flex-1 flex-col gap-2.5 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--muted)]">
+          <span className="font-medium text-[var(--brand-ink)]">{channel}</span>
+          <span className="opacity-50">·</span>
+          <time>{formatDate(article.publishedAt)}</time>
         </div>
 
         <h3
-          className={`font-[family-name:var(--font-display)] font-semibold leading-snug tracking-tight text-[#111] ${
-            featured ? 'text-2xl' : 'text-lg'
+          className={`font-[family-name:var(--font-display)] leading-snug tracking-tight text-[var(--brand-ink)] ${
+            featured ? 'text-[1.65rem] sm:text-[1.85rem]' : 'text-[1.25rem]'
           }`}
         >
           {title}
         </h3>
 
-        <p className="text-sm font-medium text-[#333]">{oneLiner}</p>
-        <p className="text-sm leading-relaxed text-[#555]">{story}</p>
+        <p className="line-clamp-3 text-sm leading-relaxed text-[var(--muted)]">{oneLiner}</p>
 
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-[#efefef] pt-3">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
           {onBookmark ? (
             <button
               type="button"
@@ -148,8 +110,10 @@ export function NewsCard({ article, onBookmark, featured = false }) {
                 e.stopPropagation();
                 onBookmark(article);
               }}
-              className={`inline-flex items-center gap-1.5 rounded-full border border-[#e5e5e5] px-3 py-1.5 text-xs ${
-                article.bookmarked ? 'bg-[#f3f3f3] text-[#111]' : 'bg-white text-[#555]'
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition ${
+                article.bookmarked
+                  ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
+                  : 'text-[var(--muted)] hover:bg-[var(--chip)] hover:text-[var(--brand-ink)]'
               }`}
             >
               <Bookmark size={14} fill={article.bookmarked ? 'currentColor' : 'none'} />
@@ -158,11 +122,8 @@ export function NewsCard({ article, onBookmark, featured = false }) {
           ) : (
             <span />
           )}
-          <span
-            data-stop-card-nav
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#ddd] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#111] shadow-sm"
-          >
-            Read more <ExternalLink size={13} />
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent)] transition group-hover:gap-1.5">
+            Read <ArrowUpRight size={14} />
           </span>
         </div>
       </div>

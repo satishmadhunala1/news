@@ -12,6 +12,13 @@ const DEFAULT_LOCATIONS = [
     country: 'in',
     region: 'Uttar Pradesh',
   },
+  {
+    id: 'uttar-pradesh',
+    label: 'Uttar Pradesh',
+    query: 'Uttar Pradesh',
+    country: 'in',
+    region: 'Uttar Pradesh',
+  },
   { id: 'telangana', label: 'Telangana', query: 'Telangana', country: 'in', region: 'Telangana' },
   { id: 'andhra-pradesh', label: 'Andhra Pradesh', query: 'Andhra Pradesh', country: 'in', region: 'Andhra Pradesh' },
   { id: 'india', label: 'India', query: 'India', country: 'in', region: null },

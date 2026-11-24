@@ -5,10 +5,8 @@ import Link from 'next/link';
 import { api, formatDate } from '@/lib/api';
 import { NewsCard } from '@/components/NewsCard';
 import { NewsSkeleton } from '@/components/NewsSkeleton';
-import { SearchBar } from '@/components/SearchBar';
 import { ErrorState } from '@/components/ErrorState';
 import { EmptyState } from '@/components/EmptyState';
-import { useLanguage } from '@/context/LanguageContext';
 
 const REGION_LINKS = [
   ['Hyderabad', '/hyderabad'],
@@ -17,7 +15,7 @@ const REGION_LINKS = [
   ['Telangana', '/telangana'],
   ['Andhra Pradesh', '/andhra-pradesh'],
   ['India', '/india'],
-  ['International', '/world'],
+  ['World', '/world'],
   ['Entertainment', '/entertainment'],
   ['Technology', '/technology'],
   ['Business', '/business'],
@@ -25,7 +23,6 @@ const REGION_LINKS = [
 ];
 
 export default function DashboardPage() {
-  const { language } = useLanguage();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,7 +31,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.dashboard({ language });
+      const res = await api.dashboard({ language: 'en' });
       setData(res.data);
     } catch (err) {
       setError(err.message);
@@ -45,7 +42,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     load();
-  }, [language]);
+  }, []);
 
   async function handleBookmark(article) {
     const res = await api.bookmark(article._id);
@@ -60,32 +57,34 @@ export default function DashboardPage() {
     }));
   }
 
-  const isTe = language === 'te';
-
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold tracking-[0.16em] text-[#666] uppercase">
-            {isTe ? 'నేటి బ్రీఫింగ్' : "Today's briefing"}
-          </p>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-4xl font-semibold tracking-tight text-[#111] sm:text-5xl">
-            {isTe ? 'వార్తా డ్యాష్‌బోర్డ్' : 'Dashboard'}
-          </h1>
-          <p className="mt-2 text-[var(--muted)]">
-            {isTe ? 'చివరి అప్‌డేట్' : 'Last updated'}:{' '}
-            {data?.lastUpdated ? formatDate(data.lastUpdated) : '—'}
-          </p>
-        </div>
-        <SearchBar />
-      </header>
-
+    <div className="animate-fade space-y-6">
       {error ? <ErrorState message={error} onRetry={load} /> : null}
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <Stat label={isTe ? 'నేటి కొత్త వార్తలు' : 'New articles today'} value={data?.todayCount ?? '—'} />
-        <Stat label={isTe ? 'మొత్తం లైబ్రరీ' : 'Total in library'} value={data?.total ?? '—'} />
-        <Stat label={isTe ? 'ముఖ్యమైన కథనాలు' : 'Important stories'} value={data?.important?.length ?? '—'} />
+      {/* Brand left + 3 stats right, same row on large screens */}
+      <section className="animate-rise grid items-end gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:gap-8">
+        <header className="min-w-0">
+          <p className="text-xs font-semibold tracking-[0.18em] text-[var(--accent)] uppercase">
+            Today&apos;s briefing
+          </p>
+          <h1 className="mt-1.5 font-[family-name:var(--font-display)] text-4xl leading-[1.05] tracking-tight text-[var(--brand-ink)] sm:text-5xl">
+            <Link href="/" className="transition hover:text-[var(--accent)]">
+              Meridian
+            </Link>
+          </h1>
+          <p className="mt-2 max-w-md text-sm text-[var(--muted)]">
+            A calm desk for the stories that matter across your cities.
+          </p>
+          <p className="mt-1.5 text-xs text-[var(--muted)]">
+            Updated {data?.lastUpdated ? formatDate(data.lastUpdated) : '—'}
+          </p>
+        </header>
+
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <Stat label="New today" value={data?.todayCount ?? '—'} />
+          <Stat label="In library" value={data?.total ?? '—'} />
+          <Stat label="Top stories" value={data?.important?.length ?? '—'} />
+        </div>
       </section>
 
       <section className="flex flex-wrap gap-2">
@@ -93,7 +92,7 @@ export default function DashboardPage() {
           <Link
             key={href}
             href={href}
-            className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-medium hover:border-[var(--brand)] hover:text-[var(--brand)]"
+            className="rounded-lg border border-[var(--border)] bg-white/70 px-3 py-1.5 text-sm text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--brand-ink)]"
           >
             {label}
           </Link>
@@ -104,9 +103,9 @@ export default function DashboardPage() {
 
       {!loading && data ? (
         <>
-          <section>
-            <h2 className="mb-4 font-[family-name:var(--font-display)] text-2xl font-semibold">
-              {isTe ? 'ముఖ్యమైన కథనాలు' : 'Top important stories'}
+          <section className="animate-rise" style={{ animationDelay: '0.05s' }}>
+            <h2 className="mb-3 font-[family-name:var(--font-display)] text-2xl tracking-tight text-[var(--brand-ink)] sm:text-3xl">
+              Top stories
             </h2>
             {data.important?.length ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -121,27 +120,28 @@ export default function DashboardPage() {
               </div>
             ) : (
               <EmptyState
-                title={isTe ? 'ముఖ్య వార్తలు లేవు' : 'No important stories yet'}
-                description={isTe ? 'Settingsలో news fetch చేయండి.' : 'Run a news fetch from Settings.'}
+                title="No important stories yet"
+                description="Run a news fetch from Settings."
               />
             )}
           </section>
 
-          <section>
-            <h2 className="mb-4 font-[family-name:var(--font-display)] text-2xl font-semibold">
-              {isTe ? 'తాజా హెడ్‌లైన్స్' : 'Latest headlines'}
+          <section className="animate-rise" style={{ animationDelay: '0.1s' }}>
+            <h2 className="mb-3 font-[family-name:var(--font-display)] text-2xl tracking-tight text-[var(--brand-ink)] sm:text-3xl">
+              Latest headlines
             </h2>
             {data.latest?.length ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {data.latest.map((article) => (
-                  <NewsCard key={`latest-${article._id}`} article={article} onBookmark={handleBookmark} />
+                  <NewsCard
+                    key={`latest-${article._id}`}
+                    article={article}
+                    onBookmark={handleBookmark}
+                  />
                 ))}
               </div>
             ) : (
-              <EmptyState
-                title={isTe ? 'హెడ్‌లైన్స్ లేవు' : 'No headlines yet'}
-                description={isTe ? 'మొదట news fetch చేయండి.' : 'Fetch news to fill the showcase.'}
-              />
+              <EmptyState title="No headlines yet" description="Fetch news to fill the desk." />
             )}
           </section>
         </>
@@ -152,9 +152,12 @@ export default function DashboardPage() {
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-5 shadow-sm">
-      <p className="text-sm text-[var(--muted)]">{label}</p>
-      <p className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold text-[#111]">
+    <div
+      className="rounded-xl border border-[var(--border)] bg-white/80 px-3 py-3 sm:px-4 sm:py-3.5"
+      style={{ boxShadow: 'var(--shadow)' }}
+    >
+      <p className="text-[10px] tracking-wide text-[var(--muted)] uppercase sm:text-xs">{label}</p>
+      <p className="mt-1 font-[family-name:var(--font-display)] text-2xl tracking-tight text-[var(--brand-ink)] sm:text-3xl">
         {value}
       </p>
     </div>

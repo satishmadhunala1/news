@@ -51,7 +51,10 @@ export const api = {
     return request(`/news/location/${encodeURIComponent(location)}?${qs}`);
   },
   search: (q, params = {}) => {
-    const qs = new URLSearchParams({ q, ...params }).toString();
+    const cleaned = Object.fromEntries(
+      Object.entries({ q, ...params }).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const qs = new URLSearchParams(cleaned).toString();
     return request(`/news/search?${qs}`);
   },
   saved: (params = {}) => {
