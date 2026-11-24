@@ -20,6 +20,7 @@ router.get('/important', newsController.importantNews);
 router.get('/saved', newsController.savedNews);
 router.get('/dashboard', newsController.dashboardStats);
 router.get('/search', newsController.searchNews);
+router.post('/chat', fetchLimiter, newsController.chatNews);
 router.get('/category/:category', newsController.byCategory);
 router.get('/location/:location', newsController.byLocation);
 router.post('/fetch', requireInternalSecret, fetchLimiter, newsController.fetchNews);

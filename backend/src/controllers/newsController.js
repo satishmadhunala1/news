@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const News = require('../models/News');
 const { processAndStore, backfillMissingImages } = require('../services/newsProcessor');
 const { searchTopic } = require('../services/topicSearchService');
+const { chatAboutNews } = require('../services/newsChatService');
 
 function parsePagination(query) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
@@ -303,6 +304,20 @@ async function dashboardStats(req, res, next) {
   }
 }
 
+async function chatNews(req, res, next) {
+  try {
+    const message = (req.body?.message || req.body?.q || '').trim();
+    if (!message) {
+      return res.status(400).json({ success: false, error: 'message is required' });
+    }
+    const location = (req.body?.location || '').trim() || undefined;
+    const data = await chatAboutNews({ message, location });
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listNews,
   latestNews,
@@ -310,6 +325,7 @@ module.exports = {
   byCategory,
   byLocation,
   searchNews,
+  chatNews,
   fetchNews,
   enrichImages,
   toggleBookmark,

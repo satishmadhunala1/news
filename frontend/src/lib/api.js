@@ -57,6 +57,14 @@ export const api = {
     const qs = new URLSearchParams(cleaned).toString();
     return request(`/news/search?${qs}`);
   },
+  chat: (message, location) =>
+    request('/news/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        ...(location ? { location } : {}),
+      }),
+    }),
   saved: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/news/saved?${qs}`);

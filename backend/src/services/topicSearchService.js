@@ -92,17 +92,36 @@ function buildTextFilter(q) {
   return { $or: or };
 }
 
+function withTimeout(promise, ms, label) {
+  let timer;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    }),
+  ]);
+}
+
 async function liveFetchTopic(q, locationHint, { forceLocation = false } = {}) {
   const query = q.trim();
-  const [rss, napi, g] = await Promise.all([
-    googleRss.searchByQuery(query).catch((err) => ({ articles: [], error: err.message })),
-    newsapi
-      .searchEverything({ q: query, pageSize: 10, sortBy: 'relevancy' })
-      .catch((err) => ({ articles: [], error: err.message })),
-    gnews
-      .searchArticles({ q: query, max: 8, country: 'in' })
-      .catch((err) => ({ articles: [], error: err.message })),
+  const settled = await Promise.allSettled([
+    withTimeout(googleRss.searchByQuery(query), 12000, 'rss'),
+    withTimeout(newsapi.searchEverything({ q: query, pageSize: 10, sortBy: 'relevancy' }), 12000, 'newsapi'),
+    withTimeout(gnews.searchArticles({ q: query, max: 8, country: 'in' }), 12000, 'gnews'),
   ]);
+
+  const rss =
+    settled[0].status === 'fulfilled'
+      ? settled[0].value
+      : { articles: [], error: settled[0].reason?.message || 'rss failed' };
+  const napi =
+    settled[1].status === 'fulfilled'
+      ? settled[1].value
+      : { articles: [], error: settled[1].reason?.message || 'newsapi failed' };
+  const g =
+    settled[2].status === 'fulfilled'
+      ? settled[2].value
+      : { articles: [], error: settled[2].reason?.message || 'gnews failed' };
 
   const hint = locationHint || inferLocationFromQuery(query) || null;
   const normalized = [
@@ -218,13 +237,21 @@ async function searchTopic({
 
   const shouldLive = live !== false && page === 1 && total < 3;
   if (shouldLive) {
-    const liveResult = await liveFetchTopic(query, location || inferredLocation, {
-      forceLocation: Boolean(location),
-    });
-    liveFetched = liveResult.saved.length;
-    liveSaved = liveResult.saved || [];
-    if (liveResult.hint) inferredLocation = liveResult.hint;
-    total = await News.countDocuments(baseFilter);
+    try {
+      const liveResult = await withTimeout(
+        liveFetchTopic(query, location || inferredLocation, {
+          forceLocation: Boolean(location),
+        }),
+        35000,
+        'liveFetchTopic'
+      );
+      liveFetched = liveResult.saved.length;
+      liveSaved = liveResult.saved || [];
+      if (liveResult.hint) inferredLocation = liveResult.hint;
+      total = await News.countDocuments(baseFilter);
+    } catch (err) {
+      logger.warn('Live topic fetch skipped', { query, message: err.message });
+    }
   }
 
   let items = await News.find(baseFilter).sort({ publishedAt: -1 }).skip(skip).limit(limit).lean();
