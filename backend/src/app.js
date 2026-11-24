@@ -11,14 +11,18 @@ function createApp() {
   const app = express();
 
   app.use(helmet());
-  // Next.js may bind 3000, 3001, … when the default port is taken
+  // FRONTEND_URL + CORS_ORIGINS (comma-separated) + common local Next ports
   const corsOrigins = [
-    config.frontendUrl,
+    ...String(config.frontendUrl || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    ...(config.corsOrigins || []),
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
-  ].filter(Boolean);
+  ].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
   app.use(
     cors({

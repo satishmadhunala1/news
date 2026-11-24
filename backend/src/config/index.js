@@ -21,6 +21,12 @@ const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   timezone: process.env.TZ || 'Asia/Kolkata',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  // Comma-separated extra browser origins allowed by CORS (local + deployed frontends)
+  corsOrigins: String(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+  publicBackendUrl: process.env.PUBLIC_BACKEND_URL || '',
   internalApiSecret: process.env.INTERNAL_API_SECRET || '',
 
   mongodbUri: process.env.MONGODB_URI || '',
